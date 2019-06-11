@@ -46,27 +46,62 @@ void MainWindow::on_serialPortSearchButton_clicked() {
 
 void MainWindow::on_startNetInButton_clicked() {
 
-    QByteArray byteArray;
-    byteArray.append(0x5A);
-//    byteArray.append(0xA5);
+//    QByteArray byteArray;
+//    byteArray.append(0x5A);
+ //    byteArray.append(0xA5);
 
-    appendLog("开启入网");
+//    signed char
+//    char cmd[6];
+//    cmd[0] = 0x5A;
+//    cmd[1] = 0xA5;  ///< 0、1为帧头
+//    cmd[4] = 0x44;  ///< 功能码-开启入网（下行）
+
+    unsigned char cmd[6] = {
+        0x5A, 0xA5, 0x0, 0x0, 0x44
+    };
+
+//    qDebug() << "MainWindow::on_startNetInButton_clicked cmd="<<cmd;
+
+    if(mCurrentSerialPort.isOpen()) {
+        qDebug() << "MainWindow::on_startNetInButton_clicked write 0x5A_0xA5_-_-_0x44" << mCurrentSerialPort.write(reinterpret_cast<const char*>(cmd));
+//        qDebug() << "mCurrentSerialPort.write 0x5A_0xA5_-_-_0x44" << mCurrentSerialPort.write(cmd);
+        appendLog("开启入网 下行 0x5A_0xA5_-_-_0x44");
+    }
 }
 
 void MainWindow::on_terminalSignInButton_clicked() {
-    appendLog("终端签到");
+    unsigned char cmd[6] = {
+        0x5A, 0xA5, 0x0, 0x0, 0x66
+    };
+//    cmd[0] = 0x5A;
+//    cmd[1] = 0xA5;  ///< 0、1为帧头
+//    cmd[4] = 0x66;  ///< 功能码-终端签到（下行）
+
+    if(mCurrentSerialPort.isOpen()) {
+        qDebug() << "MainWindow::on_terminalSignInButton_clicked write 0x5A_0xA5_-_-_0x66" << mCurrentSerialPort.write(reinterpret_cast<const char*>(cmd));
+        appendLog("终端签到 下行 0x5A_0xA5_-_-_0x66");
+    }
 }
 
 void MainWindow::on_removeTerminalButton_clicked() {
+    ///< todo
     appendLog("删除终端");
 }
 
 void MainWindow::on_modifyPanIDButton_clicked() {
+    ///< todo
     appendLog("修改PAN ID");
 }
 
 void MainWindow::on_closeNetButton_clicked() {
-    appendLog("关闭入网");
+    unsigned char cmd[6] = {
+        0x5A, 0xA5, 0x0, 0x0, 0x44
+    };
+
+    if(mCurrentSerialPort.isOpen()) {
+        qDebug() << "MainWindow::on_startNetInButton_clicked write 0x5A_0xA5_-_-_0x33" << mCurrentSerialPort.write(reinterpret_cast<const char*>(cmd));
+        appendLog("关闭入网 下行 0x5A_0xA5_-_-_0x33");
+    }
 }
 
 void MainWindow::on_readCalliperDataButton_clicked() {
@@ -99,6 +134,9 @@ void MainWindow::on_openSerialPortButton_clicked() {
     int selRowIndex = ui->serialPortListWidget->row(selItem);
     QSerialPortInfo selPortInfo = mCachedSeralPortInfoList.at(selRowIndex);
     mCurrentSerialPort.setPort(selPortInfo);
+    ///< 绑定QIODevice::readyRead 信号
+    connect(&mCurrentSerialPort, &QIODevice::readyRead, this, &MainWindow::readComDataByReadyReadSignal);
+
     bool result = mCurrentSerialPort.open(QIODevice::ReadWrite);
 //    QString portName = selectedItems.indexOf(selItem)
     QString resultTip = (result ? "成功" : "失败");
@@ -123,4 +161,13 @@ void MainWindow::appendLog(const QString &logText) {
 void MainWindow::appendMessageTipAndRecordLog(const QString &tipText) {
     QMessageBox::information(NULL, "提醒", tipText);
     appendLog(tipText);
+}
+
+void MainWindow::readComDataByReadyReadSignal() {
+    qDebug() << "MainWindow::readComDataByReadyReadSignal";
+    if(mCurrentSerialPort.isOpen()) {
+        QByteArray byteArray = mCurrentSerialPort.readAll();
+        appendLog("获取到readyRead信号数据 " + byteArray);
+        ui->autoCalliperDataLabel->setText(byteArray);
+    }
 }
