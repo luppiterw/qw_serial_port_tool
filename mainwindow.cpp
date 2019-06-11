@@ -65,7 +65,17 @@ void MainWindow::on_closeNetButton_clicked() {
 }
 
 void MainWindow::on_readCalliperDataButton_clicked() {
-    appendLog("读取卡尺数据");
+
+    qDebug() << "MainWindow::on_readCalliperDataButton_clicked mCurrentSerialPort.bytesAvailable()=" <<mCurrentSerialPort.bytesAvailable();
+
+    if(mCurrentSerialPort.bytesAvailable() > 0) {
+        QByteArray buffer = mCurrentSerialPort.readAll();
+        ///< 读取端口数据并显示
+        ui->calliperDataLabel->setText(buffer);
+        appendLog("读取卡尺数据，内容为 " + buffer);
+    } else {
+        appendLog("读取卡尺数据，数据长度=" + QString::number(mCurrentSerialPort.bytesAvailable()));
+    }
 }
 
 void MainWindow::on_openSerialPortButton_clicked() {
