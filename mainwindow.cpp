@@ -45,6 +45,11 @@ void MainWindow::on_serialPortSearchButton_clicked() {
 }
 
 void MainWindow::on_startNetInButton_clicked() {
+
+    QByteArray byteArray;
+    byteArray.append(0x5A);
+//    byteArray.append(0xA5);
+
     appendLog("开启入网");
 }
 
